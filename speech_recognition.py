@@ -6,21 +6,73 @@ from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, Pipeline, pip
 import sys
 import time
 from ollama import Client
+import requests
 
 LLM_MODEL: str = "gemma3:27b"
 # LLM_MODEL: str = "gemma3:1b"
 client: Client = Client(
-  host='http://ai.dfec.xyz:11434/'
-  # host="http://localhost:11434"
+    host="http://ai.dfec.xyz:11434/"
+    # host="http://localhost:11434"
 )
 
+# # Test cases
+# test_cases = [ # TODO: Replace these test cases with ones for wttr.in
+#     {
+#         "input": "What's the weather in Rio Rancho?",
+#         "expected": "rio+rancho"
+#     },
+#     {
+#         "input": "Weather in Atlanta Airport.",
+#         "expected": "atl"
+#     },
+#     {
+#         "input": "Weather White House",
+#         "expected": "~white+house"
+#     },
+#     {
+#         "input": "Air Force Academy weather",
+#         "expected": "~air+force+academy"
+#     },
+#     {
+#         "input": "Expected weather in DEN",
+#         "expected": "den"
+#     },
+# ]
+
+# # Function to iterate through test cases
+# def run_tests():
+#     num_passed = 0
+
+#     for i, test in enumerate(test_cases, 1):
+#         raw_input = test["input"]
+#         expected_output = test["expected"]
+
+#         print(f"\nTest {i}: {raw_input}")
+#         try:
+#             result = llm_parse_for_wttr(raw_input).strip()
+#             expected = expected_output.strip()
+
+#             print("LLM Output  :", result)
+#             print("Expected    :", expected)
+
+#             if result == expected:
+#                 print("✅ PASS")
+#                 num_passed += 1
+#             else:
+#                 print("❌ FAIL")
+
+#         except Exception as e:
+#             print("💥 ERROR:", e)
+
+#     print(f"\nSummary: {num_passed} / {len(test_cases)} tests passed.")
+
+
 def llm_parse_for_wttr(statement):
-  response = client.chat(
-    
-      messages=[
-          {
-              "role": "system",
-              "content": """ 
+    response = client.chat(
+        messages=[
+            {
+                "role": "system",
+                "content": """ 
                 # Task: Convert Natural Language Weather Requests to wttr.in Format
 
                 # Overview
@@ -49,6 +101,8 @@ def llm_parse_for_wttr(statement):
                 6. **Single-Word City:** If the request is a single-word city name, output it directly in lowercase.
 
                 7. **No Newlines:** Ensure that the output contains no newline characters (`\n`).
+
+                8. **No State:** Make sure that state or country is not included in the output if a city is given.
 
                 # Examples
 
@@ -86,16 +140,17 @@ def llm_parse_for_wttr(statement):
 
                 **Important Note:** For rules 3 and 4 (airport names and 3-letter codes), you will need to have a mechanism to accurately map airport names to their IATA codes. This prompt assumes you have access to or can build such a mapping.
                 """,
-          },
-          {
-              "role": "user",
-              "content": statement,
-          },
-      ],
-      model=LLM_MODEL,
-  )
+            },
+            {
+                "role": "user",
+                "content": statement,
+            },
+        ],
+        model=LLM_MODEL,
+    )
 
-  return response.message.content
+    return response.message.content
+
 
 def record_audio(duration_seconds: int = 10) -> npt.NDArray:
     """Record duration_seconds of audio from default microphone.
@@ -109,9 +164,8 @@ def record_audio(duration_seconds: int = 10) -> npt.NDArray:
     # Model expects single axis
     return np.squeeze(audio, axis=1)
 
-def build_pipeline(
-    model_id: str, torch_dtype: torch.dtype, device: str
-) -> Pipeline:
+
+def build_pipeline(model_id: str, torch_dtype: torch.dtype, device: str) -> Pipeline:
     """Creates a Hugging Face automatic-speech-recognition pipeline on the given device."""
     model = AutoModelForSpeechSeq2Seq.from_pretrained(
         model_id,
@@ -132,31 +186,46 @@ def build_pipeline(
     )
     return pipe
 
+
+def get_weather(location: str):
+    """Get weather from wttr using the location from the user"""
+    r = requests.get(f"https://wttr.in/{location}")
+
+    return r.text
+
+
 if __name__ == "__main__":
-    # # Get model as argument, default to "distil-whisper/distil-medium.en" if not given
-    # model_id = sys.argv[1] if len(sys.argv) > 1 else "distil-whisper/distil-medium.en"
-    # print("Using model_id {model_id}")
-    # # Use GPU if available
-    # device = "cuda" if torch.cuda.is_available() else "cpu"
-    # torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-    # print(f"Using device {device}.")
+    # Get model as argument, default to "distil-whisper/distil-medium.en" if not given
+    model_id = sys.argv[1] if len(sys.argv) > 1 else "distil-whisper/distil-medium.en"
+    print("Using model_id {model_id}")
+    # Use GPU if available
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+    print(f"Using device {device}.")
 
-    # print("Building model pipeline...")
-    # pipe = build_pipeline(model_id, torch_dtype, device)
-    # print(type(pipe))
-    # print("Done")
+    print("Building model pipeline...")
+    pipe = build_pipeline(model_id, torch_dtype, device)
+    print(type(pipe))
+    print("Done")
 
-    # print("Recording...")
-    # audio = record_audio()
-    # print("Done")
+    print("Recording...")
+    audio = record_audio()
+    print("Done")
 
-    # print("Transcribing...")
+    print("Transcribing...")
     # start_time = time.time_ns()
-    # speech = pipe(audio)
+    speech = pipe(audio)
     # end_time = time.time_ns()
-    # print("Done")
+    print("Done")
 
-    # print(speech)
+    print(speech)
     # print(f"Transcription took {(end_time-start_time)/1000000000} seconds")
-    result = llm_parse_for_wttr("Denver Airport").strip()
-    print(result)
+
+    # Checkpoint 2 Test for Ollama
+    # run_tests()
+
+    user_input = speech["text"]
+    wttr_input = llm_parse_for_wttr(user_input).strip()
+    print(wttr_input)
+    report = get_weather(wttr_input)
+    print(report)
