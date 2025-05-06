@@ -6,7 +6,7 @@ RUN apt update && \
 RUN pip install --upgrade --no-cache-dir pip && \ 
     pip install --no-cache-dir transformers==4.49.0 accelerate==1.5.2 sounddevice ollama fastapi[standard] requests fastapi uvicorn
 COPY speech_recognition.py .
-ENV HF_HOME="/huggingface/"
+ENV HF_HOME="/huggingface/" 
 # ENTRYPOINT ["python", "speech_recognition.py"]
 # Expose the port FastAPI will run on
 EXPOSE 8000

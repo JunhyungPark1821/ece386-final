@@ -14,7 +14,8 @@ app = FastAPI()
 LLM_MODEL: str = "gemma3:27b"
 # LLM_MODEL: str = "gemma3:1b"
 client: Client = Client(
-    host="http://ai.dfec.xyz:11434/"
+    host = "http://10.1.69.213:11434/"
+    # host="http://ai.dfec.xyz:11434/"
     # host="http://localhost:11434"
 )
 
@@ -35,6 +36,12 @@ pipe: Pipeline = pipeline(
     max_new_tokens=128,
     torch_dtype=torch_dtype,
     device=device,
+)
+
+# Picks up the USB microphone
+sd.default.device = (
+    "USB Audio",
+    None,
 )
 
 # # Test cases
@@ -88,7 +95,7 @@ pipe: Pipeline = pipeline(
 
 #     print(f"\nSummary: {num_passed} / {len(test_cases)} tests passed.")
 
-
+# Get the key word from user's statement
 def llm_parse_for_wttr(statement: str) -> str:
     response = client.chat(
         messages=[
@@ -246,42 +253,3 @@ def get_weather_report():
     report = get_weather(wttr_input)
     print(report)
     return "Report Complete. Give another location!"
-
-
-# if __name__ == "__main__":
-
-# Get model as argument, default to "distil-whisper/distil-medium.en" if not given
-# model_id = sys.argv[1] if len(sys.argv) > 1 else "distil-whisper/distil-medium.en"
-# print("Using model_id {model_id}")
-# # Use GPU if available
-# device = "cuda" if torch.cuda.is_available() else "cpu"
-# torch_dtype = torch.float16 if torch.cuda.is_available() else torch.float32
-# print(f"Using device {device}.")
-
-# print("Building model pipeline...")
-# pipe = build_pipeline(model_id, torch_dtype, device)
-# print(type(pipe))
-# print("Done")
-
-
-# print("Recording...")
-# audio = record_audio()
-# print("Done")
-
-# print("Transcribing...")
-# # start_time = time.time_ns()
-# speech = pipe(audio)
-# # end_time = time.time_ns()
-# print("Done")
-
-# print(speech)
-# # print(f"Transcription took {(end_time-start_time)/1000000000} seconds")
-
-# # Checkpoint 2 Test for Ollama
-# # run_tests()
-
-# user_input = speech["text"]
-# wttr_input = llm_parse_for_wttr(user_input).strip()
-# print(wttr_input)
-# report = get_weather(wttr_input)
-# print(report)

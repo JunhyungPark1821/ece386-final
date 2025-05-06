@@ -32,10 +32,9 @@ done
 if ! curl -s http://127.0.0.1:8000/docs > /dev/null; then
   echo "Server did not start within 30 seconds."
   docker stop whisper
+  trap 'echo "Stopping Docker..."; kill $DOCKER_PID' EXIT
   exit 1
 fi
-
-trap 'echo "Stopping Docker..."; kill $DOCKER_PID' EXIT
 
 # GPIO event loop
 echo "Listening for GPIO trigger on pin 105..."
