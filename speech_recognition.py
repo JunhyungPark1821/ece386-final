@@ -14,7 +14,7 @@ app = FastAPI()
 LLM_MODEL: str = "gemma3:27b"
 # LLM_MODEL: str = "gemma3:1b"
 client: Client = Client(
-    host = "http://10.1.69.213:11434/"
+    host="http://10.1.69.213:11434/"
     # host="http://ai.dfec.xyz:11434/"
     # host="http://localhost:11434"
 )
@@ -94,6 +94,7 @@ sd.default.device = (
 #             print("💥 ERROR:", e)
 
 #     print(f"\nSummary: {num_passed} / {len(test_cases)} tests passed.")
+
 
 # Get the key word from user's statement
 def llm_parse_for_wttr(statement: str) -> str:
